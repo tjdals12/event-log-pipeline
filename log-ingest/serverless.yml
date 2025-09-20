@@ -1,0 +1,100 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: tjdals12
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: f876ba2810f47ffad3d97f1
+
+provider:
+  stackName: ${self:service}-${sls:stage}
+  name: aws
+  runtime: nodejs22.x
+  region: ap-northeast-2
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  namespace: ${self:provider.stackName}
+
+functions:
+  ingest-events:
+    name: ${self:custom.namespace}-ingest-events
+    handler: src/ingest-events.handler
+    memorySize: 256
+    timeout: 5
+    logRetentionInDays: 7
+    logs:
+      logFormat: JSON
+    events:
+      - httpApi:
+          path: "/events"
+          method: post
+
+  ingest-events-consumer:
+    name: ${self:custom.namespace}-ingest-events-consumer
+    handler: src/ingest-events-consumer.handler
+    memorySize: 256
+    timeout: 30
+    logRetentionInDays: 7
+    logs:
+      logFormat: JSON
+    events:
+      - sqs:
+          arn: !GetAtt EventsQueue.Arn
+          batchSize: 10
+          maximumBatchingWindow: 10
+
+resources:
+  Resources:
+    LogsToFirehoseRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.namespace}-logs-to-firehose
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: logs.${self:provider.region}.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: put-to-firehose
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - firehose:PutRecord
+                    - firehose:PutRecordBatch
+                  Resource:
+                    - ${env:FIREHOSE_STREAM_ARN}
+
+    IngestEventsLogSubscription:
+      Type: AWS::Logs::SubscriptionFilter
+      Properties:
+        LogGroupName: /aws/lambda/${self:custom.namespace}-ingest-events
+        FilterPattern: "{$.message.kind = app_event}"
+        DestinationArn: ${env:FIREHOSE_STREAM_ARN}
+        RoleArn:
+          Fn::GetAtt: [LogsToFirehoseRole, Arn]
+
+    IngestEventsLogConsumerSubscription:
+      Type: AWS::Logs::SubscriptionFilter
+      Properties:
+        LogGroupName: /aws/lambda/${self:custom.namespace}-ingest-events-consumer
+        FilterPattern: "{$.message.kind = app_event}"
+        DestinationArn: ${env:FIREHOSE_STREAM_ARN}
+        RoleArn:
+          Fn::GetAtt: [LogsToFirehoseRole, Arn]
+
+    EventsDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.namespace}-events-dlq
+
+    EventsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.namespace}-events
+        VisibilityTimeout: 30
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt: [EventsDLQ, Arn]
+          maxReceiveCount: 5

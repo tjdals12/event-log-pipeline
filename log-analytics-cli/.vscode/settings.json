@@ -1,0 +1,12 @@
+{
+  "[sql]": {
+    "editor.defaultFormatter": "dorzey.vscode-sqlfluff",
+    "editor.formatOnSave": true
+  },
+  "sqlfluff.dialect": "athena",
+  "sqlfluff.config": "${workspaceFolder}/.sqlfluff",
+  "sqlfluff.format.enabled": true,
+  "sqlfluff.executablePath": "sqlfluff",
+  "sqlfluff.linter.arguments": ["--ignore", "templating"],
+  "sqlfluff.format.arguments": ["--ignore", "templating"]
+}

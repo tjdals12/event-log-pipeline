@@ -1,0 +1,29 @@
+{
+  "name": "log-analytics-cli",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "analytics": "NODE_OPTIONS=--no-warnings ts-node -r tsconfig-paths/register src/cli/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.4",
+  "dependencies": {
+    "@aws-sdk/client-athena": "^3.879.0",
+    "chalk": "^5.6.0",
+    "cli-spinners": "^3.2.0",
+    "commander": "^14.0.0",
+    "dotenv": "^17.2.2",
+    "log-update": "^6.1.0",
+    "moment-timezone": "^0.6.0",
+    "ora": "^8.2.0",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.2"
+  }
+}
