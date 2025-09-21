@@ -123,7 +123,7 @@ export class LogPipelineStack extends cdk.Stack {
       },
     });
 
-    transformFnLogGroup.grantWrite(streamRole);
+    // transformFnLogGroup.grantWrite(streamRole);
 
     transformFn.grantInvoke(streamRole);
 
