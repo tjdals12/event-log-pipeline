@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./diagram.svg" width="720" alt="diagram">
+</p>
+
 # log-ingest
 
 Serverless Framework로 클라이언트/서버 이벤트 로그를 받아 **CloudWatch Logs → (구독 필터) → Firehose → S3**로 보냅니다.
