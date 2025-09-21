@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./diagram.svg" width="720" alt="diagram">
+</p>
+
 # log-pipeline-infra
 
 AWS CDK로 데이터 레이크 인프라를 배포합니다. 핵심: **S3(Data Lake)**, **Kinesis Data Firehose**, **Glue Data Catalog(Athena 메타데이터)**.
