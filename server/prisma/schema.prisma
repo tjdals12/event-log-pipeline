@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id") @db.VarChar(100)
+
+  @@map("users")
+}
+
+model EventLogOutbox {
+  id            String       @id @db.VarChar(36)
+  name          String       @map("name") @db.VarChar(100)
+  params        Json         @map("params")
+  occurredAt    DateTime     @map("occurred_at")
+  status        OutboxStatus @default(Pending) @map("status")
+  attempts      Int          @default(0) @map("attempts")
+  lastAttemptAt DateTime?    @map("last_attempt_at")
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at")
+  publishedAt   DateTime?    @map("published_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@map("event_log_outbox")
+}
+
+enum OutboxStatus {
+  Pending
+  Processing
+  Published
+  Failed
+}
