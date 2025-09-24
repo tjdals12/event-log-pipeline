@@ -48,4 +48,5 @@ jobs:
           AWS_ATHENA_DB_BRONZE: ${{ secrets.AWS_ATHENA_DB_BRONZE }}
           AWS_ATHENA_DB_SILVER: ${{ secrets.AWS_ATHENA_DB_SILVER }}
           AWS_ATHENA_DB_GOLD: ${{ secrets.AWS_ATHENA_DB_GOLD }}
-        run: npm run analytics bronze -- --stage dev --dataset events_raw --action create-table
+        # run: npm run analytics bronze -- --stage dev --dataset events_raw --action create-table
+        run: npm run analytics silver -- --stage dev --dataset events_clean --action create-table
