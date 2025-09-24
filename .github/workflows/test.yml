@@ -28,7 +28,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@main
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-northeast-2
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Install deps
         working-directory: log-analytics-cli
@@ -41,4 +41,11 @@ jobs:
 
       - name: Run cli
         working-directory: log-analytics-cli
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
+          AWS_ATHENA_WORKGROUP: ${{ secrets.AWS_ATHENA_WORKGROUP }}
+          AWS_ATHENA_DB_BRONZE: ${{ secrets.AWS_ATHENA_DB_BRONZE }}
+          AWS_ATHENA_DB_SILVER: ${{ secrets.AWS_ATHENA_DB_SILVER }}
+          AWS_ATHENA_DB_GOLD: ${{ secrets.AWS_ATHENA_DB_GOLD }}
         run: npm run analytics bronze -- --stage dev --dataset events_raw --action create-table
