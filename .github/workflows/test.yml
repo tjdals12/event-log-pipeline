@@ -41,4 +41,4 @@ jobs:
 
       - name: Run cli
         working-directory: log-analytics-cli
-        run: npm run analytics -- --help
+        run: npm run analytics bronze -- --stage dev --dataset events_raw --action create-table
