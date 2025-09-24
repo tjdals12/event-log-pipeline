@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-depth: log-analytics-cli/package-lock.json
+          cache-dependency-path: log-analytics-cli/package-lock.json
 
       - name: Install deps
         working-directory: log-analytics-cli
