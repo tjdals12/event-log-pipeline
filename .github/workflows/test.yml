@@ -2,11 +2,8 @@ name: test
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - "schedule"
   schedule:
-    - cron: "*/1 * * * *"
+    - cron: "*/5 * * * *"
 
 jobs:
   run-help:
@@ -26,6 +23,12 @@ jobs:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: log-analytics-cli/package-lock.json
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@main
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
 
       - name: Install deps
         working-directory: log-analytics-cli
