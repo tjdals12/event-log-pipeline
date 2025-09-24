@@ -1,6 +1,10 @@
 name: test
+
 on:
-  workflow_dispatch: {}
+  push:
+    branches:
+      - "schedule"
+
 jobs:
   run-help:
     runs-on: ubuntu-latest
