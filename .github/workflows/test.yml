@@ -1,9 +1,11 @@
 name: test
 
 on:
-  push:
-    branches:
-      - "schedule"
+  # push:
+  #   branches:
+  #     - "schedule"
+  schedule:
+    - cron: "*/1 * * * *"
 
 jobs:
   run-help:
