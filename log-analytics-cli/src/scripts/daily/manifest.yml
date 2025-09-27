@@ -3,28 +3,28 @@ version: "2025-09-25"
 tasks:
   - dataset: silver/events_clean
 
-  # - dataset: silver/int_signup_first
-  #   dependsOn:
-  #     - silver/events_clean
+  - dataset: silver/int_signup_first
+    dependsOn:
+      - silver/events_clean
 
-  # - dataset: silver/int_signup_daily
-  #   dependsOn:
-  #     - silver/events_clean
+  - dataset: silver/int_signup_daily
+    dependsOn:
+      - silver/events_clean
 
-  # - dataset: silver/int_first_session_after_signup
-  #   dependsOn:
-  #     - silver/int_signup_first
-  #     - silver/events_clean
+  - dataset: silver/int_first_session_after_signup
+    dependsOn:
+      - silver/int_signup_first
+      - silver/events_clean
 
-  # - dataset: silver/int_active_daily
-  #   dependsOn:
-  #     - silver/events_clean
+  - dataset: silver/int_active_daily
+    dependsOn:
+      - silver/events_clean
 
-  # - dataset: gold/fact_retention_daily
-  #   dependsOn:
-  #     - silver/int_active_daily
-  #     - silver/int_signup_first
+  - dataset: gold/fact_retention_daily
+    dependsOn:
+      - silver/int_active_daily
+      - silver/int_signup_first
 
-  # - dataset: gold/fact_dau_daily
-  #   dependsOn:
-  #     - silver/int_active_daily
+  - dataset: gold/fact_dau_daily
+    dependsOn:
+      - silver/int_active_daily

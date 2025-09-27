@@ -24,14 +24,14 @@ const main = async (manifestPath: string) => {
       const handler = resolveJob({
         layer,
         dataset: table,
-        action: "insert-daily",
+        action: "overwrite-daily",
       });
 
       handlers.push(handler);
     }
 
     // const date = moment.utc().subtract(1, "days").format("YYYY-MM-DD");
-    const date = "2025-01-03";
+    const date = "2024-01-03";
     const [year, month, day] = date.split("-");
 
     for (const handler of handlers) {

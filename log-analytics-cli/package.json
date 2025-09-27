@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "analytics": "NODE_OPTIONS=--no-warnings ts-node -r tsconfig-paths/register src/cli/index.ts",
-    "analytics:daily": "STAGE=dev ts-node -r tsconfig-paths/register src/scripts/daily/main.ts"
+    "analytics:daily": "ts-node -r tsconfig-paths/register src/scripts/daily/main.ts"
   },
   "keywords": [],
   "author": "",

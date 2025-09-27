@@ -1,12 +1,9 @@
-name: test
+name: Analytics Daily (UTC 00:05)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
-  push:
-    branches:
-      - schedule
+    - cron: "5 0 * * *"
 
 jobs:
   run-help:
@@ -45,6 +42,7 @@ jobs:
       - name: Run cli
         working-directory: log-analytics-cli
         env:
+          STAGE: dev
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
           AWS_ATHENA_WORKGROUP: ${{ secrets.AWS_ATHENA_WORKGROUP }}
