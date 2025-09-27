@@ -24,12 +24,6 @@ jobs:
           cache: "npm"
           cache-dependency-path: log-analytics-cli/package-lock.json
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@main
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
       - name: Install deps
         working-directory: log-analytics-cli
         run: |
@@ -38,6 +32,12 @@ jobs:
           else
             npm install
           fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@main
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Run cli
         working-directory: log-analytics-cli
@@ -48,6 +48,4 @@ jobs:
           AWS_ATHENA_DB_BRONZE: ${{ secrets.AWS_ATHENA_DB_BRONZE }}
           AWS_ATHENA_DB_SILVER: ${{ secrets.AWS_ATHENA_DB_SILVER }}
           AWS_ATHENA_DB_GOLD: ${{ secrets.AWS_ATHENA_DB_GOLD }}
-        # run: npm run analytics bronze -- --stage dev --dataset events_raw --action create-table
-        # run: npm run analytics silver -- --stage dev --dataset events_clean --action create-table
-        run: npm run analytics silver -- --stage dev --dataset events_clean --action overwrite-daily --year 2024 --month 01 --day 01
+        run: pnpm run analytics:daily
