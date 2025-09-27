@@ -1,0 +1,52 @@
+name: Analytics Daily (UTC 00:05)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "5 0 * * *"
+
+jobs:
+  run-help:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: log-analytics-cli/package-lock.json
+
+      - name: Install deps
+        working-directory: log-analytics-cli
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@main
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Run cli
+        working-directory: log-analytics-cli
+        env:
+          STAGE: dev
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
+          AWS_ATHENA_WORKGROUP: ${{ secrets.AWS_ATHENA_WORKGROUP }}
+          AWS_ATHENA_DB_BRONZE: ${{ secrets.AWS_ATHENA_DB_BRONZE }}
+          AWS_ATHENA_DB_SILVER: ${{ secrets.AWS_ATHENA_DB_SILVER }}
+          AWS_ATHENA_DB_GOLD: ${{ secrets.AWS_ATHENA_DB_GOLD }}
+        run: npm run analytics:daily
