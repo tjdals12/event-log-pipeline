@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "5 0 * * *"
+  push:
+    branches:
+      - schedule
 
 jobs:
   run-help:
