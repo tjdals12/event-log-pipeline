@@ -51,4 +51,4 @@ jobs:
           AWS_ATHENA_DB_BRONZE: ${{ secrets.AWS_ATHENA_DB_BRONZE }}
           AWS_ATHENA_DB_SILVER: ${{ secrets.AWS_ATHENA_DB_SILVER }}
           AWS_ATHENA_DB_GOLD: ${{ secrets.AWS_ATHENA_DB_GOLD }}
-        run: pnpm run analytics:daily
+        run: npm run analytics:daily
