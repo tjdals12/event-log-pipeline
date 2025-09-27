@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { loadConfig } from "@/config/env";
 
 import { parseOptions } from "../options";
-import { resolveJob } from "../registry";
+import { resolveJob } from "@/registry";
 import { STAGES, BRONZE } from "../constants";
 import { t, indent } from "../ui";
 

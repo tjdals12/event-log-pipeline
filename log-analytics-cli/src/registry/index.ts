@@ -3,7 +3,7 @@ import bronze from "./bronze";
 import silver from "./silver";
 import gold from "./gold";
 
-const REGISTRY: Record<Layer, Registry> = {
+export const REGISTRY: Record<Layer, Registry> = {
   bronze,
   silver,
   gold,

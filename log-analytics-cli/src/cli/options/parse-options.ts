@@ -1,4 +1,4 @@
-import { Layer } from "../registry/types";
+import { Layer } from "@/registry/types";
 import { BaseSchema } from "./base";
 import { bronzeSchemas } from "./bronze";
 import { silverSchemas } from "./silver";

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "analytics": "NODE_OPTIONS=--no-warnings ts-node -r tsconfig-paths/register src/cli/index.ts"
+    "analytics": "NODE_OPTIONS=--no-warnings ts-node -r tsconfig-paths/register src/cli/index.ts",
+    "analytics:daily": "STAGE=dev ts-node -r tsconfig-paths/register src/scripts/daily/main.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +19,7 @@
     "log-update": "^6.1.0",
     "moment-timezone": "^0.6.0",
     "ora": "^8.2.0",
+    "yaml": "^2.8.1",
     "zod": "^4.1.5"
   },
   "devDependencies": {

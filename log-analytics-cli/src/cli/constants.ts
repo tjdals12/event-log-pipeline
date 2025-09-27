@@ -1,4 +1,4 @@
-import { bronze, silver, gold } from "./registry";
+import { bronze, silver, gold } from "@/registry";
 
 export const STAGES = ["dev", "prod"] as const;
 

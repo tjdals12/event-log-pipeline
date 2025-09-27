@@ -1,6 +1,8 @@
 import { Config } from "@/config/env";
 
-export type Layer = "bronze" | "silver" | "gold";
+export const LAYERS = ["bronze", "silver", "gold"] as const;
+
+export type Layer = (typeof LAYERS)[number];
 
 export type JobHandler = (config: Config, args?: unknown) => Promise<void>;
 
