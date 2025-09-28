@@ -6,7 +6,7 @@ on:
     - cron: "5 0 * * *"
 
 jobs:
-  run-help:
+  run-daily:
     runs-on: ubuntu-latest
 
     permissions:
