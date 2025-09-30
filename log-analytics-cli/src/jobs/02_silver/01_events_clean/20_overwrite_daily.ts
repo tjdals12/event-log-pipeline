@@ -5,8 +5,7 @@ import { AthenaClient } from "@aws-sdk/client-athena";
 import { Config } from "@/config/env";
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
 import { renderSql } from "@/core/sql/render-sql";
-import * as ui from "@/jobs/ui";
-import { createProgress } from "@/jobs/progress-panel";
+import { Emitter } from "@/jobs/event-emitter";
 
 const execute = async (config: Config, args?: unknown): Promise<void> => {
   const startedAt = Date.now();
@@ -14,7 +13,8 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   const { aws } = config;
   const { region, bucket, athena } = aws;
   const { workgroup, bronze, silver } = athena;
-  const { year, month, day } = args as {
+  const { emitter, year, month, day } = args as {
+    emitter?: Emitter;
     year: string;
     month: string;
     day: string;
@@ -31,24 +31,21 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   const dropTempTableSqlPath =
     "sql/02_silver/01_events_clean/23_drop_tmp_table.sql";
 
-  ui.startJob(
-    {
-      job,
-      region,
-      workgroup,
-      db: silver,
-      bucket,
-      sqlPath: [
-        createTempTableSqlPath,
-        dropPartitionSqlPath,
-        addPartitionSqlPath,
-        dropTempTableSqlPath,
-      ],
-    },
-    { pad: { after: 1 } }
-  );
+  emitter?.emit("job:start", {
+    job,
+    region,
+    workgroup,
+    db: silver,
+    bucket,
+    sqlPath: [
+      createTempTableSqlPath,
+      dropPartitionSqlPath,
+      addPartitionSqlPath,
+      dropTempTableSqlPath,
+    ],
+  });
 
-  const steps = [
+  const labels = [
     "Initialize Athena client",
     "Render SQL: Drop temp table if exists",
     "Run: Drop temp table if exists",
@@ -60,13 +57,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     "Run: Add partition",
     "Run: Drop temp table",
   ];
-  const progress = createProgress(steps, {
-    title: "PROGRESS",
-    pad: {
-      after: 1,
-    },
-  });
-  progress.start();
+  emitter?.emit("step:initialize", { labels });
 
   let athenaClient: AthenaClient;
   let sql: string = "";
@@ -74,122 +65,120 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   try {
     const results: ({ name: string } & QueryResult)[] = [];
 
-    athenaClient = await progress.run<AthenaClient>(0, async () => {
-      return createAthenaClient({ region });
-    });
+    emitter?.emit("step:start", { index: 0 });
+    athenaClient = createAthenaClient({ region });
+    emitter?.emit("step:success", { index: 0 });
 
-    sql = await progress.run<string>(1, async () => {
-      return renderSql(path.join(process.env.PWD!, dropTempTableSqlPath), {
-        silver,
-        year,
-        month,
-        day,
-      });
+    emitter?.emit("step:start", { index: 1 });
+    sql = renderSql(path.join(process.env.PWD!, dropTempTableSqlPath), {
+      silver,
+      year,
+      month,
+      day,
     });
-    const dropTempTableIfExistsResult = await progress.run(2, async () => {
-      return runQuery(athenaClient, sql, {
-        db: silver,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:success", { index: 1 });
+
+    emitter?.emit("step:start", { index: 2 });
+    const dropTempTableIfExistsResult = await runQuery(athenaClient, sql, {
+      db: silver,
+      workgroup,
+      bucket,
     });
     results.push({
       name: "Drop temp table if exists",
       ...dropTempTableIfExistsResult,
     });
+    emitter?.emit("step:success", { index: 2 });
 
-    sql = await progress.run<string>(3, async () => {
-      return renderSql(path.join(process.env.PWD!, createTempTableSqlPath), {
-        bronze,
-        silver,
-        bucket,
-        version,
-        year,
-        month,
-        day,
-      });
+    emitter?.emit("step:start", { index: 3 });
+    sql = renderSql(path.join(process.env.PWD!, createTempTableSqlPath), {
+      bronze,
+      silver,
+      bucket,
+      version,
+      year,
+      month,
+      day,
     });
-    const createTempTableResult = await progress.run(4, async () => {
-      return runQuery(athenaClient, sql, {
-        db: silver,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:success", { index: 3 });
+
+    emitter?.emit("step:start", { index: 4 });
+    const createTempTableResult = await runQuery(athenaClient, sql, {
+      db: silver,
+      workgroup,
+      bucket,
     });
     results.push({ name: "CTAS temp", ...createTempTableResult });
+    emitter?.emit("step:success", { index: 4 });
 
-    sql = await progress.run<string>(5, async () => {
-      return renderSql(path.join(process.env.PWD!, dropPartitionSqlPath), {
-        silver,
-        version,
-        year,
-        month,
-        day,
-      });
+    emitter?.emit("step:start", { index: 5 });
+    sql = renderSql(path.join(process.env.PWD!, dropPartitionSqlPath), {
+      silver,
+      version,
+      year,
+      month,
+      day,
     });
-    const dropPartitionResult = await progress.run(6, async () => {
-      return runQuery(athenaClient, sql, {
-        db: silver,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:success", { index: 5 });
+
+    emitter?.emit("step:start", { index: 6 });
+    const dropPartitionResult = await runQuery(athenaClient, sql, {
+      db: silver,
+      workgroup,
+      bucket,
     });
     results.push({ name: "Drop partition", ...dropPartitionResult });
+    emitter?.emit("step:success", { index: 6 });
 
-    sql = await progress.run<string>(7, async () => {
-      return renderSql(path.join(process.env.PWD!, addPartitionSqlPath), {
-        bucket,
-        silver,
-        version,
-        year,
-        month,
-        day,
-      });
+    emitter?.emit("step:start", { index: 7 });
+    sql = renderSql(path.join(process.env.PWD!, addPartitionSqlPath), {
+      bucket,
+      silver,
+      version,
+      year,
+      month,
+      day,
     });
-    const addPartitionResult = await progress.run(8, async () => {
-      return runQuery(athenaClient, sql, {
-        db: silver,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:success", { index: 7 });
+
+    emitter?.emit("step:start", { index: 8 });
+    const addPartitionResult = await runQuery(athenaClient, sql, {
+      db: silver,
+      workgroup,
+      bucket,
     });
     results.push({ name: "Add paritition", ...addPartitionResult });
+    emitter?.emit("step:success", { index: 8 });
 
-    sql = await progress.run<string>(1, async () => {
-      return renderSql(path.join(process.env.PWD!, dropTempTableSqlPath), {
-        silver,
-        year,
-        month,
-        day,
-      });
+    emitter?.emit("step:start", { index: 9 });
+    sql = renderSql(path.join(process.env.PWD!, dropTempTableSqlPath), {
+      silver,
+      year,
+      month,
+      day,
     });
-    const dropTempTableResult = await progress.run(9, async () => {
-      return runQuery(athenaClient, sql, {
-        db: silver,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:success", { index: 9 });
+
+    emitter?.emit("step:start", { index: 10 });
+    const dropTempTableResult = await runQuery(athenaClient, sql, {
+      db: silver,
+      workgroup,
+      bucket,
     });
     results.push({ name: "Drop temp table", ...dropTempTableResult });
+    emitter?.emit("step:success", { index: 10 });
 
-    progress.stop();
-
-    ui.reportJobResults(results, { pad: { after: 1 } });
+    emitter?.emit("job:report:results", { results });
 
     const finishedAt = Date.now();
-    ui.endJob(
-      {
-        job,
-        results,
-        startedAt,
-        finishedAt,
-      },
-      { pad: { after: 1 } }
-    );
+    emitter?.emit("job:end", {
+      job,
+      results,
+      startedAt,
+      finishedAt,
+    });
   } catch (e: unknown) {
-    progress.stop();
-
-    ui.reportJobError({ error: e, sql }, { pad: { after: 1 } });
+    emitter?.emit("job:error", { error: e, sql });
 
     process.exit(1);
   }

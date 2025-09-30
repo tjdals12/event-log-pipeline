@@ -3,89 +3,71 @@ import * as path from "path";
 import { AthenaClient } from "@aws-sdk/client-athena";
 
 import { Config } from "@/config/env";
-import * as ui from "@/jobs/ui";
-import { createProgress } from "@/jobs/progress-panel";
 import { createAthenaClient, runQuery } from "@/core/athena";
 import { renderSql } from "@/core/sql/render-sql";
+import { Emitter } from "@/jobs/event-emitter";
 
-const execute = async (config: Config) => {
+const execute = async (config: Config, args: unknown) => {
   const { aws } = config;
   const { region, bucket, athena } = aws;
   const { workgroup, silver } = athena;
+  const { emitter } = args as { emitter?: Emitter };
 
   const job = "Create Table · silver/int_active_daily";
   const sqlPath = "sql/02_silver/20_int_active_daily/01_create_table.sql";
 
   const startedAt = Date.now();
 
-  ui.startJob(
-    {
-      job,
-      region,
-      workgroup,
-      db: silver,
-      bucket,
-      sqlPath,
-    },
-    {
-      pad: { after: 1 },
-    }
-  );
+  emitter?.emit("job:start", {
+    job,
+    region,
+    workgroup,
+    db: silver,
+    bucket,
+    sqlPath,
+  });
 
-  const steps = [
+  const labels = [
     "Initialize Athena client",
     "Render SQL template",
     "Run query",
   ];
-  const progress = createProgress(steps, {
-    title: "PROGRESS",
-    pad: {
-      after: 1,
-    },
-  });
-  progress.start();
+  emitter?.emit("step:initialize", { labels });
 
   let athenaClient: AthenaClient;
   let sql: string = "";
 
   try {
-    athenaClient = await progress.run(0, async () => {
-      return createAthenaClient({ region });
+    emitter?.emit("step:start", { index: 0 });
+    athenaClient = createAthenaClient({ region });
+    emitter?.emit("step:success", { index: 0 });
+
+    emitter?.emit("step:start", { index: 1 });
+    sql = renderSql(path.join(process.env.PWD!, sqlPath), {
+      silver,
+      bucket,
     });
+    emitter?.emit("step:success", { index: 1 });
 
-    sql = await progress.run(1, async () => {
-      return renderSql(path.join(process.env.PWD!, sqlPath), {
-        silver,
-        bucket,
-      });
+    emitter?.emit("step:start", { index: 2 });
+    const result = await runQuery(athenaClient, sql, {
+      db: silver,
+      workgroup,
+      bucket,
     });
+    emitter?.emit("step:success", { index: 2 });
 
-    const result = await progress.run(2, async () => {
-      return runQuery(athenaClient, sql, {
-        db: silver,
-        workgroup,
-        bucket,
-      });
-    });
-
-    progress.stop();
-
-    ui.reportJobResult(result, { pad: { after: 1 } });
+    emitter?.emit("job:report:result", { result });
 
     const finishedAt = Date.now();
-    ui.endJob(
-      {
-        job,
-        results: [result],
-        startedAt,
-        finishedAt,
-      },
-      { pad: { after: 1 } }
-    );
+    emitter?.emit("job:end", {
+      job,
+      results: [result],
+      startedAt,
+      finishedAt,
+    });
   } catch (e) {
-    progress.stop();
-
-    ui.reportJobError({ error: e, sql }, { pad: { after: 1 } });
+    emitter?.emit("job:error", { error: e, sql });
 
     process.exit(1);
   }

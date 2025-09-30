@@ -5,12 +5,15 @@ import { loadExecutionOrder } from "../manifest";
 import { loadConfig } from "@/config/env";
 import { resolveJob } from "@/registry";
 import { JobHandler } from "@/registry/types";
+import { ActionsLogger } from "@/jobs/actions-logger";
 
 const main = async (manifestPath: string) => {
   try {
     const stage = process.env.STAGE;
     if (!stage)
       throw new Error(`Invalid stage '${stage}'. Allowed: dev, prod.`);
+
+    const actionsLogger = new ActionsLogger();
 
     const config = loadConfig(stage);
 
@@ -34,7 +37,7 @@ const main = async (manifestPath: string) => {
     const [year, month, day] = date.split("-");
 
     for (const handler of handlers) {
-      await handler(config, { year, month, day });
+      await handler(config, { emitter: actionsLogger, year, month, day });
     }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

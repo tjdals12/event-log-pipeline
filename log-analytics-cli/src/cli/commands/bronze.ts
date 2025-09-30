@@ -2,9 +2,10 @@ import { Command } from "commander";
 import { ZodError } from "zod";
 
 import { loadConfig } from "@/config/env";
+import { resolveJob } from "@/registry";
+import { CliLogger } from "@/jobs/cli-logger";
 
 import { parseOptions } from "../options";
-import { resolveJob } from "@/registry";
 import { STAGES, BRONZE } from "../constants";
 import { t, indent } from "../ui";
 
@@ -32,7 +33,9 @@ command
 
       const handler = resolveJob(args);
 
-      await handler(config, args);
+      const cliLogger = new CliLogger();
+
+      await handler(config, { ...args, emitter: cliLogger });
     } catch (e) {
       if (e instanceof ZodError) {
         const message = e.issues

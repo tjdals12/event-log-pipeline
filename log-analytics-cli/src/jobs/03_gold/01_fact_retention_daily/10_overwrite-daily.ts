@@ -5,14 +5,14 @@ import { AthenaClient } from "@aws-sdk/client-athena";
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
 import { renderSql } from "@/core/sql/render-sql";
 import { Config } from "@/config/env";
-import * as ui from "@/jobs/ui";
-import { createProgress } from "@/jobs/progress-panel";
+import { Emitter } from "@/jobs/event-emitter";
 
 const execute = async (config: Config, args?: unknown): Promise<void> => {
   const { aws } = config;
   const { region, bucket, athena } = aws;
   const { workgroup, silver, gold } = athena;
-  const { year, month, day } = args as {
+  const { emitter, year, month, day } = args as {
+    emitter: Emitter;
     year: string;
     month: string;
     day: string;
@@ -27,32 +27,23 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
 
   const startedAt = Date.now();
 
-  ui.startJob(
-    {
-      job,
-      region,
-      workgroup,
-      db: gold,
-      bucket,
-      sqlPath: [dropPartitionSqlPath, insertDailySqlPath],
-    },
-    { pad: { after: 1 } }
-  );
+  emitter?.emit("job:start", {
+    job,
+    region,
+    workgroup,
+    db: gold,
+    bucket,
+    sqlPath: [dropPartitionSqlPath, insertDailySqlPath],
+  });
 
-  const steps = [
+  const labels = [
     "Initialize Athena client",
     "Render SQL: Drop partition",
     "Run: Drop partition",
     "Render SQL: Insert daily",
     "Run: Insert daily",
   ];
-  const progress = createProgress(steps, {
-    title: "PROGRESS",
-    pad: {
-      after: 1,
-    },
-  });
-  progress.start();
+  emitter?.emit("step:initialize", { labels });
 
   let athenaClient: AthenaClient;
   let sql: string = "";
@@ -60,61 +51,54 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   try {
     const results: ({ name: string } & QueryResult)[] = [];
 
-    athenaClient = await progress.run(0, async () => {
-      return createAthenaClient({ region });
-    });
+    emitter?.emit("step:start", { index: 0 });
+    athenaClient = createAthenaClient({ region });
+    emitter?.emit("step:success", { index: 0 });
 
-    sql = await progress.run(1, async () => {
-      return renderSql(path.join(process.env.PWD!, dropPartitionSqlPath), {
-        gold,
-        metricDate,
-      });
+    emitter?.emit("step:start", { index: 1 });
+    sql = renderSql(path.join(process.env.PWD!, dropPartitionSqlPath), {
+      gold,
+      metricDate,
     });
+    emitter?.emit("step:success", { index: 1 });
 
-    const dropPartitionResult = await progress.run(2, async () => {
-      return runQuery(athenaClient, sql, {
-        db: gold,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:start", { index: 2 });
+    const dropPartitionResult = await runQuery(athenaClient, sql, {
+      db: gold,
+      workgroup,
+      bucket,
     });
     results.push({ name: "Drop partition", ...dropPartitionResult });
+    emitter?.emit("step:success", { index: 2 });
 
-    sql = await progress.run(3, async () => {
-      return renderSql(path.join(process.env.PWD!, insertDailySqlPath), {
-        gold,
-        silver,
-        metricDate,
-      });
+    emitter?.emit("step:start", { index: 3 });
+    sql = renderSql(path.join(process.env.PWD!, insertDailySqlPath), {
+      gold,
+      silver,
+      metricDate,
     });
+    emitter?.emit("step:success", { index: 3 });
 
-    const insertDailyResult = await progress.run(4, async () => {
-      return runQuery(athenaClient, sql, {
-        db: gold,
-        workgroup,
-        bucket,
-      });
+    emitter?.emit("step:start", { index: 4 });
+    const insertDailyResult = await runQuery(athenaClient, sql, {
+      db: gold,
+      workgroup,
+      bucket,
     });
     results.push({ name: "Insert daily", ...insertDailyResult });
+    emitter?.emit("step:success", { index: 4 });
 
-    progress.stop();
-
-    ui.reportJobResults(results, { pad: { after: 1 } });
+    emitter?.emit("job:report:results", { results });
 
     const finishedAt = Date.now();
-    ui.endJob(
-      {
-        job,
-        results,
-        startedAt,
-        finishedAt,
-      },
-      { pad: { after: 1 } }
-    );
+    emitter?.emit("job:end", {
+      job,
+      results,
+      startedAt,
+      finishedAt,
+    });
   } catch (e: unknown) {
-    progress.stop();
-
-    ui.reportJobError({ error: e, sql }, { pad: { after: 1 } });
+    emitter?.emit("job:error", { error: e, sql });
 
     process.exit(1);
   }
