@@ -40,6 +40,7 @@
     "skipLibCheck": true,
 
     "paths": {
+      "@/sql/*": ["./sql/*"],
       "@/config/*": ["./src/config/*"],
       "@/core/*": ["./src/core/*"],
       "@/jobs/*": ["./src/jobs/*"],

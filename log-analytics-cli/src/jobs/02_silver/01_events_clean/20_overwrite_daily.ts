@@ -6,13 +6,17 @@ import { Config } from "@/config/env";
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
 import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
+import { buildQuery as buildCreateTempTableQuery } from "@/sql/02_silver/01_events_clean/20_CTAS_daily_versioned";
+import { buildQuery as buildDropPartitionQuery } from "@/sql/02_silver/01_events_clean/21_drop_partition";
+import { buildQuery as buildAddPartitionQuery } from "@/sql/02_silver/01_events_clean/22_add_partition";
+import { buildQuery as buildDropTempTableQuey } from "@/sql/02_silver/01_events_clean/23_drop_tmp_table";
 
 const execute = async (config: Config, args?: unknown): Promise<void> => {
   const startedAt = Date.now();
 
   const { aws } = config;
   const { region, bucket, athena } = aws;
-  const { workgroup, bronze, silver } = athena;
+  const { workgroup, bronze: bronzeDb, silver: silverDb } = athena;
   const { emitter, year, month, day } = args as {
     emitter?: Emitter;
     year: string;
@@ -20,6 +24,31 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     day: string;
   };
   const version = Date.now().toString();
+
+  const query1 = buildCreateTempTableQuery({
+    bronzeDb: bronzeDb,
+    silverDb: silverDb,
+    bucket,
+    year,
+    month,
+    day,
+    version,
+  });
+  const query2 = buildDropPartitionQuery({
+    silverDb: silverDb,
+    year,
+    month,
+    day,
+  });
+  const query3 = buildAddPartitionQuery({
+    silverDb: silverDb,
+    bucket,
+    year,
+    month,
+    day,
+    version,
+  });
+  const query4 = buildDropTempTableQuey({ silverDb: silverDb });
 
   const job = `Daily Partition Overwrite · silver/events_clean · ${year}/${month}/${day}`;
   const createTempTableSqlPath =
@@ -35,7 +64,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     job,
     region,
     workgroup,
-    db: silver,
+    db: silverDb,
     bucket,
     sqlPath: [
       createTempTableSqlPath,
@@ -70,17 +99,12 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 0 });
 
     emitter?.emit("step:start", { index: 1 });
-    sql = renderSql(path.join(process.env.PWD!, dropTempTableSqlPath), {
-      silver,
-      year,
-      month,
-      day,
-    });
+    sql = buildDropTempTableQuey({ silverDb: silverDb });
     emitter?.emit("step:success", { index: 1 });
 
     emitter?.emit("step:start", { index: 2 });
     const dropTempTableIfExistsResult = await runQuery(athenaClient, sql, {
-      db: silver,
+      db: silverDb,
       workgroup,
       bucket,
     });
@@ -91,20 +115,20 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 2 });
 
     emitter?.emit("step:start", { index: 3 });
-    sql = renderSql(path.join(process.env.PWD!, createTempTableSqlPath), {
-      bronze,
-      silver,
+    sql = buildCreateTempTableQuery({
+      bronzeDb: bronzeDb,
+      silverDb: silverDb,
       bucket,
-      version,
       year,
       month,
       day,
+      version,
     });
     emitter?.emit("step:success", { index: 3 });
 
     emitter?.emit("step:start", { index: 4 });
     const createTempTableResult = await runQuery(athenaClient, sql, {
-      db: silver,
+      db: silverDb,
       workgroup,
       bucket,
     });
@@ -112,9 +136,8 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 4 });
 
     emitter?.emit("step:start", { index: 5 });
-    sql = renderSql(path.join(process.env.PWD!, dropPartitionSqlPath), {
-      silver,
-      version,
+    sql = buildDropPartitionQuery({
+      silverDb: silverDb,
       year,
       month,
       day,
@@ -123,7 +146,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
 
     emitter?.emit("step:start", { index: 6 });
     const dropPartitionResult = await runQuery(athenaClient, sql, {
-      db: silver,
+      db: silverDb,
       workgroup,
       bucket,
     });
@@ -131,19 +154,19 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 6 });
 
     emitter?.emit("step:start", { index: 7 });
-    sql = renderSql(path.join(process.env.PWD!, addPartitionSqlPath), {
+    sql = buildAddPartitionQuery({
+      silverDb: silverDb,
       bucket,
-      silver,
-      version,
       year,
       month,
       day,
+      version,
     });
     emitter?.emit("step:success", { index: 7 });
 
     emitter?.emit("step:start", { index: 8 });
     const addPartitionResult = await runQuery(athenaClient, sql, {
-      db: silver,
+      db: silverDb,
       workgroup,
       bucket,
     });
@@ -151,17 +174,12 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 8 });
 
     emitter?.emit("step:start", { index: 9 });
-    sql = renderSql(path.join(process.env.PWD!, dropTempTableSqlPath), {
-      silver,
-      year,
-      month,
-      day,
-    });
+    sql = buildDropTempTableQuey({ silverDb: silverDb });
     emitter?.emit("step:success", { index: 9 });
 
     emitter?.emit("step:start", { index: 10 });
     const dropTempTableResult = await runQuery(athenaClient, sql, {
-      db: silver,
+      db: silverDb,
       workgroup,
       bucket,
     });

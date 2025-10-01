@@ -1,10 +1,8 @@
-import * as path from "path";
-
 import { Config } from "@/config/env";
 import { AthenaClient } from "@aws-sdk/client-athena";
 import { createAthenaClient, runQuery } from "@/core/athena";
-import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
+import { buildQuery } from "@/sql/01_bronze/01_events_raw/01_create_table";
 
 const execute = async (config: Config, args?: unknown): Promise<void> => {
   const { aws } = config;
@@ -15,10 +13,8 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   };
 
   const job = "Create Table · bronze/events_raw";
-  const sqlPath = "sql/01_bronze/01_events_raw/01_create_table.sql";
-
+  const sqlPath = "sql/01_bronze/01_events_raw/01_create_table.ts";
   const startedAt = Date.now();
-
   emitter?.emit("job:start", {
     job,
     region,
@@ -27,32 +23,25 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     bucket,
     sqlPath,
   });
-
   const labels = [
     "Initialize Athena client",
     "Render SQL template",
     "Run query",
   ];
   emitter?.emit("step:initialize", { labels });
-
   let athenaClient: AthenaClient;
   let sql: string = "";
-
   try {
     emitter?.emit("step:start", { index: 0 });
     athenaClient = createAthenaClient({ region });
     emitter?.emit("step:success", { index: 0 });
-
     emitter?.emit("step:start", { index: 1 });
-    sql = renderSql(path.join(process.env.PWD!, sqlPath), { db, bucket });
+    sql = buildQuery({ bronzeDb: db, bucket });
     emitter?.emit("step:success", { index: 1 });
-
     emitter?.emit("step:start", { index: 2 });
     const result = await runQuery(athenaClient, sql, { db, workgroup, bucket });
     emitter?.emit("step:success", { index: 2 });
-
     emitter?.emit("job:report:result", { result });
-
     const finishedAt = Date.now();
     emitter?.emit("job:end", {
       job,
@@ -62,7 +51,6 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     });
   } catch (e: unknown) {
     emitter?.emit("job:error", { error: e, sql });
-
     process.exit(1);
   }
 };

@@ -1,10 +1,8 @@
-import * as path from "path";
-
 import { Config } from "@/config/env";
 import { AthenaClient } from "@aws-sdk/client-athena";
 import { createAthenaClient, runQuery } from "@/core/athena";
-import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
+import { buildQuery } from "@/sql/01_bronze/01_events_raw/90_drop_table";
 
 const execute = async (config: Config, args: unknown): Promise<void> => {
   const { aws } = config;
@@ -13,7 +11,7 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
   const { emitter } = args as { emitter?: Emitter };
 
   const job = "Drop Table · bronze/events_raw";
-  const sqlPath = "sql/01_bronze/01_events_raw/90_drop_table.sql";
+  const sqlPath = "sql/01_bronze/01_events_raw/90_drop_table.ts";
 
   const startedAt = Date.now();
 
@@ -42,7 +40,7 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 0 });
 
     emitter?.emit("step:start", { index: 1 });
-    sql = renderSql(path.join(process.env.PWD!, sqlPath), { db, bucket });
+    sql = buildQuery({ bronzeDb: db });
     emitter?.emit("step:success", { index: 1 });
 
     emitter?.emit("step:start", { index: 2 });
