@@ -13,8 +13,8 @@ export const buildQuery = (args: {
   const eventDate = [year, month, day].join("-");
 
   const query = sql`
-    ALTER TABLE \`${sql.raw(silverDb)}\`.events_clean DROP IF EXISTS
-    PARTITION (event_date = DATE ${sql.lit(eventDate)})
+    ALTER TABLE \`${sql.raw(silverDb)}\`.int_signup_daily DROP IF EXISTS
+    PARTITION (signup_date = DATE ${sql.lit(eventDate)})
   `;
 
   const compiled = query.compile(silver).sql;

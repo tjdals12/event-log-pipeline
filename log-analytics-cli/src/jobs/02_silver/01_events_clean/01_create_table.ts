@@ -1,10 +1,7 @@
-import * as path from "path";
-
 import { AthenaClient } from "@aws-sdk/client-athena";
 
 import { Config } from "@/config/env";
 import { createAthenaClient, runQuery } from "@/core/athena";
-import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
 import { buildQuery } from "@/sql/02_silver/01_events_clean/01_create_table";
 

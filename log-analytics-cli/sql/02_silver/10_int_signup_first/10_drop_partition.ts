@@ -10,11 +10,11 @@ export const buildQuery = (args: {
 }): string => {
   const { silverDb, year, month, day } = args;
 
-  const eventDate = [year, month, day].join("-");
+  const signUpDate = [year, month, day].join("-");
 
   const query = sql`
-    ALTER TABLE \`${sql.raw(silverDb)}\`.events_clean DROP IF EXISTS
-    PARTITION (event_date = DATE ${sql.lit(eventDate)})
+    ALTER TABLE \`${sql.raw(silverDb)}\`.int_signup_first DROP IF EXISTS
+    PARTITION (signup_date = DATE ${sql.lit(signUpDate)})
   `;
 
   const compiled = query.compile(silver).sql;

@@ -1,16 +1,14 @@
-import * as path from "path";
-
 import { AthenaClient } from "@aws-sdk/client-athena";
 
 import { Config } from "@/config/env";
 import { createAthenaClient, runQuery } from "@/core/athena";
-import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
+import { buildQuery } from "@/sql/02_silver/11_int_signup_daily/01_create_table";
 
 const execute = async (config: Config, args: unknown) => {
   const { aws } = config;
   const { region, bucket, athena } = aws;
-  const { workgroup, silver } = athena;
+  const { workgroup, silver: silverDb } = athena;
   const { emitter } = args as { emitter?: Emitter };
 
   const job = "Create Table · silver/int_signup_daily";
@@ -22,7 +20,7 @@ const execute = async (config: Config, args: unknown) => {
     job,
     region,
     workgroup,
-    db: silver,
+    db: silverDb,
     bucket,
     sqlPath,
   });
@@ -43,15 +41,12 @@ const execute = async (config: Config, args: unknown) => {
     emitter?.emit("step:success", { index: 0 });
 
     emitter?.emit("step:start", { index: 1 });
-    sql = renderSql(path.join(process.env.PWD!, sqlPath), {
-      silver,
-      bucket,
-    });
+    sql = buildQuery({ silverDb, bucket });
     emitter?.emit("step:success", { index: 1 });
 
     emitter?.emit("step:start", { index: 2 });
     const result = await runQuery(athenaClient, sql, {
-      db: silver,
+      db: silverDb,
       workgroup,
       bucket,
     });

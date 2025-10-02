@@ -11,21 +11,6 @@ export const buildQuery = (args: {
 }): string => {
   const { bronzeDb, silverDb, year, month, day } = args;
 
-  bronze
-    .withSchema(bronzeDb)
-    .selectFrom("events_raw")
-    .select([
-      "event_uuid",
-      "event_name",
-      "event_params",
-      sql`cast(at_timezone(from_iso8601_timestamp(event_timestamp), 'utc') AS timestamp)`.as(
-        "event_timestamp"
-      ),
-      sql`date(cast(at_timezone(from_iso8601_timestamp(event_timestamp), 'utc') AS timestamp))`.as(
-        "event_date"
-      ),
-    ]);
-
   const compiled = silver
     .withSchema(silverDb)
     .insertInto("events_clean")

@@ -2,12 +2,12 @@ import { sql } from "kysely";
 
 import { silver } from "@/sql/database";
 
-export const buildQuery = (args: { silverDb: string }) => {
+export const buildQuery = (args: { silverDb: string }): string => {
   const { silverDb } = args;
 
   const query = sql`DROP TABLE IF EXISTS \`${sql.raw(
     silverDb
-  )}\`.events_clean__temp`;
+  )}\`.int_signup_first`;
 
   const compiled = query.compile(silver).sql;
 

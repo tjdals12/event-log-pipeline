@@ -1,4 +1,5 @@
 import { AthenaClient } from "@aws-sdk/client-athena";
+
 import { Config } from "@/config/env";
 import { createAthenaClient, runQuery } from "@/core/athena";
 import { Emitter } from "@/jobs/event-emitter";

@@ -1,10 +1,7 @@
-import * as path from "path";
-
 import { AthenaClient } from "@aws-sdk/client-athena";
 
 import { Config } from "@/config/env";
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
-import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
 import { buildQuery as buildCreateTempTableQuery } from "@/sql/02_silver/01_events_clean/20_CTAS_daily_versioned";
 import { buildQuery as buildDropPartitionQuery } from "@/sql/02_silver/01_events_clean/21_drop_partition";

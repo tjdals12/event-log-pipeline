@@ -1,5 +1,6 @@
-import { bronze, silver } from "@/sql/database";
 import { sql } from "kysely";
+
+import { bronze, silver } from "@/sql/database";
 
 export const buildQuery = (args: {
   bronzeDb: string;
