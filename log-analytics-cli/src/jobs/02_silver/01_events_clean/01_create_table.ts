@@ -14,7 +14,7 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
   };
 
   const job = "Create Table · silver/events_clean";
-  const sqlPath = "sql/02_silver/01_events_clean/01_create_table.sql";
+  const sqlPath = "sql/02_silver/01_events_clean/01_create_table.ts";
 
   const startedAt = Date.now();
 

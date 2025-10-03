@@ -18,7 +18,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   };
 
   const job = `Monthly Partition Insert · silver/events_clean · ${year}/${month}`;
-  const sqlPath = "sql/02_silver/01_events_clean/11_insert_monthly.sql";
+  const sqlPath = "sql/02_silver/01_events_clean/11_insert_monthly.ts";
 
   emitter?.emit("job:start", {
     job,

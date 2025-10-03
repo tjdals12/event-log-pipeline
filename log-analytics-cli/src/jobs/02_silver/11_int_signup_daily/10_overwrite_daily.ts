@@ -19,9 +19,9 @@ const execute = async (config: Config, args?: unknown) => {
 
   const job = `Daily Partition Overwrite · silver/int_signup_daily · ${year}/${month}/${day}`;
   const dropPartitionSqlPath =
-    "sql/02_silver/11_int_signup_daily/10_drop_partition.sql";
+    "sql/02_silver/11_int_signup_daily/10_drop_partition.ts";
   const insertDailySqlPath =
-    "sql/02_silver/11_int_signup_daily/11_insert_daily.sql";
+    "sql/02_silver/11_int_signup_daily/11_insert_daily.ts";
 
   const startedAt = Date.now();
 

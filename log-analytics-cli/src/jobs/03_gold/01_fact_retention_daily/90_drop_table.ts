@@ -15,7 +15,7 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
   const { emitter } = args as { emitter: Emitter };
 
   const job = "Drop Table · gold/fact_retention_daily";
-  const sqlPath = "sql/03_gold/01_fact_retention_daily/90_drop_table.sql";
+  const sqlPath = "sql/03_gold/01_fact_retention_daily/90_drop_table.ts";
 
   const startedAt = Date.now();
 

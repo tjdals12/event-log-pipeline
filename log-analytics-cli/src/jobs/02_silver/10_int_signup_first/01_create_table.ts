@@ -14,7 +14,7 @@ const execute = async (config: Config, args: unknown) => {
   };
 
   const job = "Create Table · silver/int_signup_first";
-  const sqlPath = "sql/02_silver/10_int_signup_first/01_create_table.sql";
+  const sqlPath = "sql/02_silver/10_int_signup_first/01_create_table.ts";
 
   const startedAt = Date.now();
 

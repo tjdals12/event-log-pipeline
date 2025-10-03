@@ -13,7 +13,7 @@ const execute = async (config: Config, args: unknown) => {
 
   const job = "Create Table · silver/int_first_session_after_signup";
   const sqlPath =
-    "sql/02_silver/21_int_first_session_after_signup/01_create_table.sql";
+    "sql/02_silver/21_int_first_session_after_signup/01_create_table.ts";
 
   const startedAt = Date.now();
 

@@ -3,17 +3,15 @@ import { AthenaClient } from "@aws-sdk/client-athena";
 import { Config } from "@/config/env";
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
 import { Emitter } from "@/jobs/event-emitter";
-import { buildQuery as buildCreateTempTableQuery } from "@/sql/02_silver/01_events_clean/20_CTAS_daily_versioned";
-import { buildQuery as buildDropPartitionQuery } from "@/sql/02_silver/01_events_clean/21_drop_partition";
-import { buildQuery as buildAddPartitionQuery } from "@/sql/02_silver/01_events_clean/22_add_partition";
-import { buildQuery as buildDropTempTableQuery } from "@/sql/02_silver/01_events_clean/23_drop_tmp_table";
+import { buildQuery as buildCreateTempTableQuery } from "@/sql/02_silver/20_int_active_daily/20_CTAS_daily_versioned";
+import { buildQuery as buildDropPartitionQuery } from "@/sql/02_silver/20_int_active_daily/21_drop_partition";
+import { buildQuery as buildAddPartitionQuery } from "@/sql/02_silver/20_int_active_daily/22_add_partition";
+import { buildQuery as buildDropTempTableQuery } from "@/sql/02_silver/20_int_active_daily/23_drop_tmp_table";
 
-const execute = async (config: Config, args?: unknown): Promise<void> => {
-  const startedAt = Date.now();
-
+const execute = async (config: Config, args?: unknown) => {
   const { aws } = config;
   const { region, bucket, athena } = aws;
-  const { workgroup, bronze: bronzeDb, silver: silverDb } = athena;
+  const { workgroup, silver: silverDb } = athena;
   const { emitter, year, month, day } = args as {
     emitter?: Emitter;
     year: string;
@@ -22,15 +20,41 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   };
   const version = Date.now().toString();
 
-  const job = `Daily Partition Overwrite · silver/events_clean · ${year}/${month}/${day}`;
+  const eventDate = [year, month, day].join("-");
+
+  const job = `Daily Partition Overwrite · silver/int_active_daily · ${year}/${month}/${day}`;
   const createTempTableSqlPath =
-    "sql/02_silver/01_events_clean/20_CTAS_daily_versioned.ts";
+    "sql/02_silver/20_int_active_daily/20_CTAS_daily_versioned.ts";
   const dropPartitionSqlPath =
-    "sql/02_silver/01_events_clean/21_drop_partition.ts";
+    "sql/02_silver/20_int_active_daily/21_drop_partition.ts";
   const addPartitionSqlPath =
-    "sql/02_silver/01_events_clean/22_add_partition.ts";
+    "sql/02_silver/20_int_active_daily/22_add_partition.ts";
   const dropTempTableSqlPath =
-    "sql/02_silver/01_events_clean/23_drop_tmp_table.ts";
+    "sql/02_silver/20_int_active_daily/23_drop_tmp_table.ts";
+
+  // const query1 = buildCreateTempTableQuery({
+  //   silverDb,
+  //   bucket,
+  //   eventDate,
+  //   version,
+  // });
+  // console.log(query1);
+
+  // const query2 = buildDropPartitionQuery({ silverDb, eventDate });
+  // console.log(query2);
+
+  // const query3 = buildAddPartitionQuery({
+  //   silverDb,
+  //   bucket,
+  //   eventDate,
+  //   version,
+  // });
+  // console.log(query3);
+
+  // const query4 = buildDropTempTableQuery({ silverDb });
+  // console.log(query4);
+
+  const startedAt = Date.now();
 
   emitter?.emit("job:start", {
     job,
@@ -88,12 +112,9 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
 
     emitter?.emit("step:start", { index: 3 });
     sql = buildCreateTempTableQuery({
-      bronzeDb: bronzeDb,
       silverDb: silverDb,
       bucket,
-      year,
-      month,
-      day,
+      eventDate,
       version,
     });
     emitter?.emit("step:success", { index: 3 });
@@ -110,9 +131,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:start", { index: 5 });
     sql = buildDropPartitionQuery({
       silverDb: silverDb,
-      year,
-      month,
-      day,
+      eventDate,
     });
     emitter?.emit("step:success", { index: 5 });
 
@@ -129,9 +148,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     sql = buildAddPartitionQuery({
       silverDb: silverDb,
       bucket,
-      year,
-      month,
-      day,
+      eventDate,
       version,
     });
     emitter?.emit("step:success", { index: 7 });
@@ -167,7 +184,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
       startedAt,
       finishedAt,
     });
-  } catch (e: unknown) {
+  } catch (e) {
     emitter?.emit("job:error", { error: e, sql });
 
     process.exit(1);

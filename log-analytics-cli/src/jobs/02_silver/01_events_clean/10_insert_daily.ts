@@ -19,7 +19,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
   };
 
   const job = `Daily Partition Insert · silver/events_clean · ${year}/${month}/${day}`;
-  const sqlPath = "sql/02_silver/01_events_clean/10_insert_daily.sql";
+  const sqlPath = "sql/02_silver/01_events_clean/10_insert_daily.ts";
 
   emitter?.emit("job:start", {
     job,

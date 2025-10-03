@@ -21,9 +21,8 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
 
   const job = `Daily Partition Overwrite · gold/fact_dau_daily · ${year}/${month}/${day}`;
   const dropPartitionSqlPath =
-    "sql/03_gold/02_fact_dau_daily/10_drop_partition.sql";
-  const insertDailySqlPath =
-    "sql/03_gold/02_fact_dau_daily/11_insert_daily.sql";
+    "sql/03_gold/02_fact_dau_daily/10_drop_partition.ts";
+  const insertDailySqlPath = "sql/03_gold/02_fact_dau_daily/11_insert_daily.ts";
 
   const startedAt = Date.now();
 

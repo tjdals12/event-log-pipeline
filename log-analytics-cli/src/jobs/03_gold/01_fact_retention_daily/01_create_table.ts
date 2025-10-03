@@ -12,7 +12,7 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
   const { emitter } = args as { emitter?: Emitter };
 
   const job = "Create Table · gold/fact_retention_daily";
-  const sqlPath = "sql/03_gold/01_fact_retention_daily/01_create_table.sql";
+  const sqlPath = "sql/03_gold/01_fact_retention_daily/01_create_table.ts";
 
   const startedAt = Date.now();
 
