@@ -7,6 +7,7 @@ import { parseOptions } from "../options";
 import { resolveJob } from "@/registry";
 import { indent, t } from "../ui";
 import { STAGES, GOLD } from "../constants";
+import { CliLogger } from "@/jobs/cli-logger";
 
 const command = new Command("gold");
 
@@ -35,7 +36,9 @@ command
 
       const handler = resolveJob(args);
 
-      await handler(config, args);
+      const cliLogger = new CliLogger();
+
+      await handler(config, { ...args, emitter: cliLogger });
     } catch (e) {
       if (e instanceof ZodError) {
         const message = e.issues

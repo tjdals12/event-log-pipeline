@@ -1,16 +1,15 @@
-import * as path from "path";
-
 import { AthenaClient } from "@aws-sdk/client-athena";
 
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
-import { renderSql } from "@/core/sql/render-sql";
 import { Config } from "@/config/env";
 import { Emitter } from "@/jobs/event-emitter";
+import { buildQuery as buildDropPartitionQuery } from "@/sql/03_gold/01_fact_retention_daily/10_drop_partition";
+import { buildQuery as buildInsertDailyQuery } from "@/sql/03_gold/01_fact_retention_daily/11_insert_daily";
 
 const execute = async (config: Config, args?: unknown): Promise<void> => {
   const { aws } = config;
   const { region, bucket, athena } = aws;
-  const { workgroup, silver, gold } = athena;
+  const { workgroup, silver: silverDb, gold: goldDb } = athena;
   const { emitter, year, month, day } = args as {
     emitter: Emitter;
     year: string;
@@ -31,7 +30,7 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     job,
     region,
     workgroup,
-    db: gold,
+    db: goldDb,
     bucket,
     sqlPath: [dropPartitionSqlPath, insertDailySqlPath],
   });
@@ -56,15 +55,12 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 0 });
 
     emitter?.emit("step:start", { index: 1 });
-    sql = renderSql(path.join(process.env.PWD!, dropPartitionSqlPath), {
-      gold,
-      metricDate,
-    });
+    sql = buildDropPartitionQuery({ goldDb, metricDate });
     emitter?.emit("step:success", { index: 1 });
 
     emitter?.emit("step:start", { index: 2 });
     const dropPartitionResult = await runQuery(athenaClient, sql, {
-      db: gold,
+      db: goldDb,
       workgroup,
       bucket,
     });
@@ -72,16 +68,12 @@ const execute = async (config: Config, args?: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 2 });
 
     emitter?.emit("step:start", { index: 3 });
-    sql = renderSql(path.join(process.env.PWD!, insertDailySqlPath), {
-      gold,
-      silver,
-      metricDate,
-    });
+    sql = buildInsertDailyQuery({ silverDb, goldDb, metricDate });
     emitter?.emit("step:success", { index: 3 });
 
     emitter?.emit("step:start", { index: 4 });
     const insertDailyResult = await runQuery(athenaClient, sql, {
-      db: gold,
+      db: goldDb,
       workgroup,
       bucket,
     });

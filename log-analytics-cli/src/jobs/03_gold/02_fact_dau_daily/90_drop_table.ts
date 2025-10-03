@@ -6,13 +6,14 @@ import { Config } from "@/config/env";
 import { createAthenaClient, runQuery } from "@/core/athena";
 import { renderSql } from "@/core/sql/render-sql";
 import { Emitter } from "@/jobs/event-emitter";
+import { buildQuery } from "@/sql/03_gold/02_fact_dau_daily/90_drop_table";
 
 const execute = async (config: Config, args: unknown): Promise<void> => {
   const startedAt = Date.now();
 
   const { aws } = config;
   const { region, bucket, athena } = aws;
-  const { workgroup, gold } = athena;
+  const { workgroup, gold: goldDb } = athena;
   const { emitter } = args as { emitter?: Emitter };
 
   const job = "Drop Table · gold/fact_dau_daily";
@@ -22,7 +23,7 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
     job,
     region,
     workgroup,
-    db: gold,
+    db: goldDb,
     bucket,
     sqlPath,
   });
@@ -43,15 +44,12 @@ const execute = async (config: Config, args: unknown): Promise<void> => {
     emitter?.emit("step:success", { index: 0 });
 
     emitter?.emit("step:start", { index: 1 });
-    sql = renderSql(path.join(process.env.PWD!, sqlPath), {
-      gold,
-      bucket,
-    });
+    sql = buildQuery({ goldDb });
     emitter?.emit("step:success", { index: 1 });
 
     emitter?.emit("step:start", { index: 2 });
     const result = await runQuery(athenaClient, sql, {
-      db: gold,
+      db: goldDb,
       workgroup,
       bucket,
     });

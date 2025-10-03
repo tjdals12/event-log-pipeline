@@ -1,4 +1,4 @@
-export interface FactRetentionDaily {
+export interface FactRetentionDailyTable {
   cohort_date: Date;
   day_n: number;
   cohort_size: string;
