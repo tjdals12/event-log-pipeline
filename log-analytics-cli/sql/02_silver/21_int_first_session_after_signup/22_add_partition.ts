@@ -10,10 +10,12 @@ export const buildQuery = (args: {
 }): string => {
   const { silverDb, bucket, eventDate, version } = args;
 
-  const location = `s3://${bucket}/silver/int_active_daily/event_date=${eventDate}/v=${version}/`;
+  const location = `s3://${bucket}/silver/int_first_session_after_signup/event_date=${eventDate}/v=${version}/`;
 
   const query = sql`
-    ALTER TABLE \`${sql.raw(silverDb)}\`.int_active_daily ADD IF NOT EXISTS
+    ALTER TABLE \`${sql.raw(
+      silverDb
+    )}\`.int_first_session_after_signup ADD IF NOT EXISTS
     PARTITION (event_date = DATE ${sql.lit(eventDate)})
     LOCATION ${sql.lit(location)}
   `;

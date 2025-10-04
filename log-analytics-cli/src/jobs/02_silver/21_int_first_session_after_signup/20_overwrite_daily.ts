@@ -3,10 +3,10 @@ import { AthenaClient } from "@aws-sdk/client-athena";
 import { Config } from "@/config/env";
 import { createAthenaClient, QueryResult, runQuery } from "@/core/athena";
 import { Emitter } from "@/jobs/event-emitter";
-import { buildQuery as buildCreateTempTableQuery } from "@/sql/02_silver/20_int_active_daily/20_CTAS_daily_versioned";
-import { buildQuery as buildDropPartitionQuery } from "@/sql/02_silver/20_int_active_daily/21_drop_partition";
-import { buildQuery as buildAddPartitionQuery } from "@/sql/02_silver/20_int_active_daily/22_add_partition";
-import { buildQuery as buildDropTempTableQuery } from "@/sql/02_silver/20_int_active_daily/23_drop_tmp_table";
+import { buildQuery as buildCreateTempTableQuery } from "@/sql/02_silver/21_int_first_session_after_signup/20_CTAS_daily_versioned";
+import { buildQuery as buildDropPartitionQuery } from "@/sql/02_silver/21_int_first_session_after_signup/21_drop_partition";
+import { buildQuery as buildAddPartitionQuery } from "@/sql/02_silver/21_int_first_session_after_signup/22_add_partition";
+import { buildQuery as buildDropTempTableQuery } from "@/sql/02_silver/21_int_first_session_after_signup/23_drop_tmp_table";
 
 const execute = async (config: Config, args?: unknown) => {
   const { aws } = config;
@@ -22,15 +22,15 @@ const execute = async (config: Config, args?: unknown) => {
 
   const eventDate = [year, month, day].join("-");
 
-  const job = `Daily Partition Overwrite · silver/int_active_daily · ${year}/${month}/${day}`;
+  const job = `Daily Partition Overwrite · silver/int_first_session_after_signup · ${year}/${month}/${day}`;
   const createTempTableSqlPath =
-    "sql/02_silver/20_int_active_daily/20_CTAS_daily_versioned.ts";
+    "sql/02_silver/21_int_first_session_after_signup/20_CTAS_daily_versioned.ts";
   const dropPartitionSqlPath =
-    "sql/02_silver/20_int_active_daily/21_drop_partition.ts";
+    "sql/02_silver/21_int_first_session_after_signup/21_drop_partition.ts";
   const addPartitionSqlPath =
-    "sql/02_silver/20_int_active_daily/22_add_partition.ts";
+    "sql/02_silver/21_int_first_session_after_signup/22_add_partition.ts";
   const dropTempTableSqlPath =
-    "sql/02_silver/20_int_active_daily/23_drop_tmp_table.ts";
+    "sql/02_silver/21_int_first_session_after_signup/23_drop_tmp_table.ts";
 
   const startedAt = Date.now();
 

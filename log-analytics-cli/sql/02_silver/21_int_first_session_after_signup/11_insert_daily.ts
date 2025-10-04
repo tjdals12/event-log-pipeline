@@ -54,15 +54,20 @@ export const buildQuery = (args: {
         )
         .groupBy("cohort.user_id")
     )
-    .selectFrom("first_after")
+    .selectFrom("first_after as fa")
+    .innerJoin("cohort as c", (join) =>
+      join.onRef("c.user_id", "=", "fa.user_id")
+    )
     .select([
-      "user_id",
-      "first_session_timestamp",
-      sql`cast(first_session_date AS DATE)`.as("first_session_date"),
-      sql`cast(first_session_date AS DATE)`.as("event_date"),
+      "c.user_id",
+      "c.signup_timestamp",
+      sql`cast(c.signup_date AS DATE)`.as("signup_date"),
+      "fa.first_session_timestamp",
+      sql`cast(fa.first_session_date AS DATE)`.as("first_session_date"),
+      sql`cast(fa.first_session_date AS DATE)`.as("event_date"),
     ])
     .where(
-      sql`cast(first_session_date AS DATE)`,
+      sql`cast(fa.first_session_date AS DATE)`,
       "=",
       sql<string>`DATE ${sql.lit(eventDate)}`
     );

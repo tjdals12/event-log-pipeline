@@ -13,8 +13,11 @@ export const buildQuery = (args: {
       silverDb
     )}\`.int_first_session_after_signup (
         user_id string,
+        signup_timestamp timestamp,
+        signup_date date,
         first_session_timestamp timestamp,
-        first_session_date date
+        first_session_date date,
+        days_to_first_session int
     )
     PARTITIONED BY (
         event_date date

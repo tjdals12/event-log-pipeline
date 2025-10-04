@@ -62,7 +62,7 @@ export const buildQuery = (args: {
       "cs.cohort_size",
       "r.retained_users",
       sql`cast(r.retained_users * 1.0 / nullif(cs.cohort_size, 0) as double)`.as(
-        "retention_date"
+        "retention_rate"
       ),
       sql`date ${sql.lit(metricDate)}`.as("metric_date"),
     ]);

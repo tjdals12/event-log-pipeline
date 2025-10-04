@@ -7,7 +7,7 @@ export const buildQuery = (args: { silverDb: string }): string => {
 
   const query = sql`DROP TABLE IF EXISTS \`${sql.raw(
     silverDb
-  )}\`.int_active_daily__temp`;
+  )}\`.int_first_session_after_signup__temp`;
 
   const compiled = query.compile(silver).sql;
 

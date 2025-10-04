@@ -1,5 +1,6 @@
-import { silver } from "@/sql/database";
 import { sql } from "kysely";
+
+import { silver } from "@/sql/database";
 
 export const buildQuery = (args: {
   silverDb: string;
